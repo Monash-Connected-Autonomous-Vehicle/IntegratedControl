@@ -73,11 +73,12 @@ void loop() {
 */
 
   poll_times[0] = poll_times[100]; // allows wrap-around indexing ([i-1])
-  time_passed_rolling = (time_of_poll - time_of_prev_poll)*0.000001;
-  time_passed_instant = (time_of_poll - time_of_prev_poll)*0.000001;
+  time_passed_rolling = max(time_of_poll - time_of_prev_poll , micros() - time_of_poll)*0.000001;
+
+  //time_passed_instant = (time_of_poll - time_of_prev_poll)*0.000001;
 
 
-  ticks_per_second = min(1/((micros() - poll_times[poll_times_index])*0.000001) , 1/((poll_times[poll_times_index] - poll_times[poll_times_index-1])*0.000001));
+  ticks_per_second = 1/((time_passed_rolling));
 
   //rotations per second
   rot_per_second = ticks_per_second/ticks_per_roation;
