@@ -7,7 +7,7 @@
 //Velocity bias from raw displacement readings 
 #define instant_bias 0.25
 #define rolling_bias 0.75
-#define rolling_length 100
+#define rolling_length 10
 
 
 // velocity 
@@ -45,12 +45,14 @@ void encoder_isr() {
   // timestamp polls 
   time_of_prev_poll = time_of_poll;
   time_of_poll = micros();
-
+/*
   //Rolling average 
   if (poll_times_index >= rolling_length+1) { poll_times_index = 1; } // Overflow 
   poll_times[poll_times_index] = micros();
   poll_times_index++;
+*/
 }
+
 void setup() {
   Serial.begin(115200); // Initialize serial communication
   pinMode(ENCODER_A, INPUT_PULLUP);
@@ -72,13 +74,13 @@ void loop() {
 
 */
 
-  poll_times[0] = poll_times[100]; // allows wrap-around indexing ([i-1])
-  time_passed_rolling = max(time_of_poll - time_of_prev_poll , micros() - time_of_poll)*0.000001;
+  //time_passed_rolling = max(time_of_poll - time_of_prev_poll , micros() - time_of_poll);
+  time_passed_rolling = time_of_poll - time_of_prev_poll;
 
   //time_passed_instant = (time_of_poll - time_of_prev_poll)*0.000001;
 
 
-  ticks_per_second = 1/((time_passed_rolling));
+  ticks_per_second = 1/((time_passed_rolling)*0.000001);
 
   //rotations per second
   rot_per_second = ticks_per_second/ticks_per_roation;
