@@ -7,7 +7,7 @@
 
 // PID
 #include <PID_v2.h>
-double Kp = 20, Ki = 50, Kd = 10; //order of magnitude 10-1000
+double Kp = 2, Ki = 5, Kd = 1; //order of magnitude 10-1000
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
 float goal_velocity = 0.9;
@@ -56,8 +56,6 @@ void PID() {
   if (PID_raw > 100) {PID_raw = 100;}
   PID_out_pwm = (PID_raw*5) + 1500;
   PID_out_magnitude = PID_raw / 100.0f;
-
-
 }
 
 void setup() {

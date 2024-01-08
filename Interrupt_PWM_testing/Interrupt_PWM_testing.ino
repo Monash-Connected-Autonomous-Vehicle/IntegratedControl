@@ -39,9 +39,6 @@
 // To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "ESP32_PWM.h"
 
-#ifndef LED_BUILTIN
-  #define LED_BUILTIN       2
-#endif
 
 #define HW_TIMER_INTERVAL_US      20L
 
@@ -68,22 +65,9 @@ bool IRAM_ATTR TimerHandler(void * timerNo)
 
 
 // You can assign pins here. Be carefull to select good pin to use or crash
-uint32_t PWM_Pin    = LED_BUILTIN;
+uint32_t PWM_Pin    = 14;
 
-// You can assign any interval for any timer here, in Hz
-float PWM_Freq1   = 50.0f;   //1.0f;
-// You can assign any interval for any timer here, in Hz
-float PWM_Freq2   = 50.0f;   //2.0f;
 
-// You can assign any interval for any timer here, in microseconds
-uint32_t PWM_Period1 = 1000000 / PWM_Freq1;
-// You can assign any interval for any timer here, in microseconds
-uint32_t PWM_Period2 = 1000000 / PWM_Freq2;
-
-// You can assign any duty_cycle for any PWM here, from 0-100
-float PWM_DutyCycle1  = 7.5f;     //50.0f;
-// You can assign any duty_cycle for any PWM here, from 0-100
-float PWM_DutyCycle2  = 7.5f;    //90.0f;
 
 // Channel number used to identify associated channel
 int channelNum;
@@ -117,10 +101,19 @@ channelNum = ISR_PWM.setPWM_Period(PWM_Pin, 50, 7.5f);
 
 ////////////////////////////////////////////////
 
-void changePWM(int pin, int channel, float duty)
+float throttleToDuty(float throttle)
+{
+// Assume the vehicles ESC which maps 7.5% to neutural, 5% reverse, 10% forward (full)
+// function: duty(throttle) = throttle * multipier + constant
+float mult = 0.025;
+float cons = 7.5;
+return throttle * mult + cons;
+}
+
+void changePWM(int pin, int channel, float throttle)
 {
   // You can use this with PWM_Freq in Hz
-  if (!ISR_PWM.modifyPWMChannel(channel, pin, 50, duty))
+  if (!ISR_PWM.modifyPWMChannel(channel, pin, 50, throttleToDuty(throttle)))
   {
     Serial.print(F("modifyPWMChannel error for PWM_Period"));
   }
@@ -128,29 +121,11 @@ void changePWM(int pin, int channel, float duty)
 
 ////////////////////////////////////////////////
 
-void changingPWM()
-{
-  static ulong changingPWM_timeout = 0;
 
-  static ulong current_millis;
-
-#define CHANGING_PWM_INTERVAL    10000L
-
-  current_millis = millis();
-
-  // changePWM every CHANGING_PWM_INTERVAL (10) seconds.
-  if ( (current_millis > changingPWM_timeout) )
-  {
-    if (changingPWM_timeout > 0)
-      changePWM(2,channelNum,7.5f);
-
-    changingPWM_timeout = current_millis + CHANGING_PWM_INTERVAL;
-  }
-}
-
-////////////////////////////////////////////////
 
 void loop()
 {
-  changingPWM();
+  //changingPWM();
+  changePWM(PWM_Pin,channelNum,0.0f);
+  delay(100);
 }
