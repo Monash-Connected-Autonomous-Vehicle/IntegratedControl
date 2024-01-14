@@ -83,7 +83,9 @@ float throttleToDuty(float throttle)
 
 float mult = 0.01;
 float cons = 7.5;
-return throttle * mult + cons;
+
+// adding 25 because of deadzone
+return (throttle + 25) * mult + cons;
 }
 
 void changePWM(int pin, int channel, float throttle)
@@ -101,7 +103,7 @@ void changePWM(int pin, int channel, float throttle)
 // PID
 #include <PID_v2.h>
 //double Kp = 2, Ki = 5, Kd = 1; 
-double Kp = 1, Ki = 1, Kd = 1; 
+double Kp = 1, Ki = 0.1, Kd = 0; 
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
 // Kinematics 
