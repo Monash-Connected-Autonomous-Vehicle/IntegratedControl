@@ -96,7 +96,7 @@ void send(int X_VAL_HORIZONTAL, int Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_V
   }
 }
 void updateMessage() {
-  // so you can see that new data is being sent
+  // can see that new data is being sent
   txNum += 1;
   if (txNum > '9') {
     txNum = '0';
