@@ -31,15 +31,15 @@ data_pack data_var;
 //===========
 void setup()
 {
-   Serial.begin(115200);
-   delay(3000);
-   Serial.println("SimpleRx Starting");
-   radio.begin();
-   radio.setDataRate( RF24_250KBPS );
-   radio.openReadingPipe(1, thisSlaveAddress);
-   radio.startListening();
-   pinMode(LED_BUTTON, OUTPUT);
-   pinMode(LED_SWITCH, OUTPUT);
+  Serial.begin(115200);
+  delay(3000);
+  Serial.println("SimpleRx Starting");
+  radio.begin();
+  radio.setDataRate(RF24_250KBPS);
+  radio.openReadingPipe(1, thisSlaveAddress);
+  radio.startListening();
+  pinMode(LED_BUTTON, OUTPUT);
+  pinMode(LED_SWITCH, OUTPUT);
 }
 //=============
 void loop()
@@ -51,12 +51,11 @@ void loop()
 //==============
 void getData()
 {
-   if ( radio.available() )
-   {
-      radio.read( &data_var, sizeof(data_var) );
+  if (radio.available()){
+    radio.read(&data_var, sizeof(data_var));
       
-      newData = true;
-   }
+    newData = true;
+  }
 }
 
 int getControllerPosData(){
@@ -67,15 +66,15 @@ void showData()
 {
    if (newData == true)
    {
-      Serial.print("Data received: x-value =  ");
-      Serial.print(data_var.xValuePack);
-      Serial.print(", y-value = ");
-      Serial.print(data_var.yValuePack);
-      Serial.print(", Button-value = ");
-      Serial.print(data_var.buttonState);
-      Serial.print(", Switch-value = ");
-      Serial.println(data_var.togSwitchVal);
-      newData = false;
+    Serial.print("Data received: x-value =  ");
+    Serial.print(data_var.xValuePack);
+    Serial.print(", y-value = ");
+    Serial.print(data_var.yValuePack);
+    Serial.print(", Button-value = ");
+    Serial.print(data_var.buttonState);
+    Serial.print(", Switch-value = ");
+    Serial.println(data_var.togSwitchVal);
+    newData = false;
    }
 }
 
