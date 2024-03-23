@@ -115,7 +115,7 @@ void changePWM(int pin, int channel, float throttle)
   // You can use this with PWM_Freq in Hz
   if (!ISR_PWM.modifyPWMChannel(channel, pin, 50, throttleToDuty(throttle)))
   {
-    Serial.print(F("modifyPWMChannel error for PWM_Period"));
+    Serial.print(F("modifyPWMChannel error failed PWM_Period"));
   }
 }
 

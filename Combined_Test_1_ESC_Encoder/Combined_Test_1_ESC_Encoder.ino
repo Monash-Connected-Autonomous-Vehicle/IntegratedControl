@@ -238,10 +238,4 @@ void loop() {
 
     Serial.println();
 
-
-    
-
-
-
-
 }
