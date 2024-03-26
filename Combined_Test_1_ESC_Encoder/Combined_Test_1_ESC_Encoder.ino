@@ -11,7 +11,7 @@
 
 
 */
-// GLOBALS 
+// GLOBALS
 
 // You can assign pins here. Be carefull to select good pin to use or crash
 uint32_t PWM_Pin    = 14;

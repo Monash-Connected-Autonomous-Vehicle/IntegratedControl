@@ -39,7 +39,7 @@ struct data_pack {
 data_pack data_var;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(VRX_PIN_LEFT_JOYSTICK, INPUT);
   pinMode(VRY_PIN_RIGHT_JOYSTICK, INPUT);
   Serial.println("SimpleTx Starting");

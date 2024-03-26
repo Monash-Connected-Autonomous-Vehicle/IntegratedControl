@@ -1,6 +1,6 @@
 Prerequsites:
 
-- ESP32 VROOM (Or equivilant)
+- ESP32 WROOM (Or equivilant)
 - Motor ESC with reverse capability (neutral at 1500us)
 - Optical / Magnetic encoder
 
