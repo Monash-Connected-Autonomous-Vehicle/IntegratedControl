@@ -57,7 +57,7 @@ volatile uint32_t startTimeMicroseconds;
 ////////////////
 
 // Initialise ESP32 Timer 1
-ESP32Timer ITimer(1);
+ESP32Timer HTimer(1);
 
 //////////////////////////////
 // INITIALISE ESP32_ISR_PWM //
@@ -90,7 +90,7 @@ float throttleToDuty(float throttle)
   return (throttle + 25) * mult + cons;
 }
 
-// Frequency used in tandem with duty cycle to control the ESC
+// Frequency of PWM used to control the ESC
 const float PWM_FREQ = 50;
 
 void setPWMThrottle(int pin, int channel, float throttle)
@@ -102,7 +102,13 @@ void setPWMThrottle(int pin, int channel, float throttle)
   }
 }
 
+///////////////////////////////
+// PID THROTTLE CONTROL LOOP //
+///////////////////////////////
 #include <PID_v2.h>
+
+volatile float targetVelocity = 0;
+
 //double Kp = 2, Ki = 5, Kd = 1; 
 double pidGainP = 1, pidGainI = 0.1, pidGainD = 0; 
 PID_v2 myPID(pidGainP, pidGainI, pidGainD, PID::Direct);
@@ -118,9 +124,8 @@ int pidOutputPWM = 0.0;
 volatile int pidElapsedTicks = 0;
 volatile int pidDisplacementTicks = 0; // Global variable for storing the encoder position
 
-
-// Interrupt callback function
-void encoder_isr() {
+// Interrupt callback function for rotary encoders
+void IRAM_ATTR encoder_isr() {
   // Reading the current state of encoder A and B
   int A = digitalRead(PIN_RENC_A1);
   int B = digitalRead(PIN_RENC_A2);
@@ -151,7 +156,7 @@ float err_amount(float velocity, float goal){
   return((velocity-goal)/goal);
 }
 
-float PID() {
+float IRAM_ATTR PID() {
   float PID_raw = myPID.Run(velocity);
   if (PID_raw > 100) {PID_raw = 100;}
   pidOutputPWM = (PID_raw*5) + 1500;
@@ -208,13 +213,13 @@ void setup() {
   Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
 
   // Setup timer with interval //
-  if (ITimer.attachInterruptInterval(HW_TIMER_INTERVAL_US, TimerHandler))
+  if (HTimer.attachInterruptInterval(HW_TIMER_INTERVAL_US, TimerHandler))
   {
     startTimeMicroseconds = micros();
-    Serial.print(F("Starting ITimer OK, micros() = ")); Serial.println(startTimeMicroseconds);
+    Serial.print(F("Starting HTimer OK, micros() = ")); Serial.println(startTimeMicroseconds);
   }
   else
-    Serial.println(F("Can't set ITimer. Select another freq. or timer"));
+    Serial.println(F("Can't set HTimer. Select another freq. or timer"));
   // TODO: Handle ESC B
   channelNum = ISR_PWM.setPWM_Period(PIN_ESC_A_PWM, PWM_FREQ, 7.5f); // Begins at 1500us 
   Serial.println("Arming ESCS");
@@ -233,41 +238,37 @@ void setup() {
 
   myPID.Start(velocity,          // input
               0,                 // current output
-              0);                // TODO: USE CAN VALUE?
+              targetVelocity);                // TODO: USE CAN VALUE?
 
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void loop() {
-  // put your main code here, to run repeatedly:
 
-  //TODO: Convert global sleep to ISR Delay
-          delayMicroseconds(TIME_INTERVAL);
+  // TODO: Convert global sleep to ISR Delay
+  delayMicroseconds(TIME_INTERVAL);
 
   // Cache old versions of each order term
-    old_velocity = velocity;
-    velocity = measure_velocity();
-    acceleration = measure_accel(velocity, old_velocity);
+  old_velocity = velocity;
+  velocity = measure_velocity();
+  acceleration = measure_accel(velocity, old_velocity);
 
   // TODO: Make pid function a callback (remove globals for better flow)
 
   setPWMThrottle(PIN_ESC_A_PWM,channelNum,PID());
 
-    // use this print format so you can disable individual plots on the plotter window
-    Serial.print("zeroline...Div's_displacement:"+ String(0,10)+",");
-    Serial.print("cur:"+ String(pidDisplacementTicks,10)+",");
-    Serial.print("cur':"+ String(velocity,10)+",");
-    Serial.print("tar':"+ String(10,10)+",");
-    Serial.print("cur'':"+ String(acceleration,10)+",");
-    Serial.print("PID:"+ String(pidOutputMagnitude,10)+",");
-    Serial.print("PWM:"+ String(pidOutputPWM,10)+",");
+  // use this print format so you can disable individual plots on the plotter window
+  Serial.print("zeroline...Div's_displacement:"+ String(0,10)+",");
+  Serial.print("cur:"+ String(pidDisplacementTicks,10)+",");
+  Serial.print("cur':"+ String(velocity,10)+",");
+  Serial.print("tar':"+ String(10,10)+",");
+  Serial.print("cur'':"+ String(acceleration,10)+",");
+  Serial.print("PID:"+ String(pidOutputMagnitude,10)+",");
+  Serial.print("PWM:"+ String(pidOutputPWM,10)+",");
 
-    //Serial.print("error:"+ String(err_amount(vel,goal_velocity),10)+",");
-    //Serial.print("zero:"+ String(0,10)+",");
+  //Serial.print("error:"+ String(err_amount(vel,goal_velocity),10)+",");
+  //Serial.print("zero:"+ String(0,10)+",");
 
-    Serial.println();
-
+  Serial.println();
 }
 
 void onRecieveCAN(int packetSize) {
@@ -309,11 +310,13 @@ void onRecieveCAN(int packetSize) {
       case CANPacketType::Velocity:
         /* code */
         Serial.print("Got Velocity: ");
-        float velocity;        
-        memcpy(&velocity, packetBuffer, sizeof(velocity));
+        float newTargetVelocity;        
+        
+        // Update the target velocity
+        memcpy(&newTargetVelocity, packetBuffer, sizeof(newTargetVelocity));
 
-        // TODO: CHANGE TARGET VELOCITY
-
+        // Change target velocity
+        targetVelocity = newTargetVelocity;
         break;
       
       default:
