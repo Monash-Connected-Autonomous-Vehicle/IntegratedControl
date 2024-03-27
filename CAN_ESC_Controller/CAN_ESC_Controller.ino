@@ -20,7 +20,6 @@ enum CANPacketType {
   TurnAmount = 3,
 };
 
-
 // GLOBALS
 
 const long HW_TIMER_INTERVAL_US = 20;
@@ -116,7 +115,7 @@ PID_v2 myPID(pidGainP, pidGainI, pidGainD, PID::Direct);
 // Kinematics 
 float pidErr = 0.0;
 float velocity = 0.0;
-float old_velocity = 0.0;
+float oldVelocity = 0.0;
 float acceleration = 0.0;
 float pidOutputMagnitude = 0.0;
 int pidOutputPWM = 0.0;
@@ -140,28 +139,28 @@ void IRAM_ATTR encoder_isr() {
 }
 
 // Math function for ang disp -> lin vel
-float measure_velocity() {
-  float rotations_per_interval = float(pidElapsedTicks) / float(TICKS_PER_ROTATION); 
-  float meters_per_interval = rotations_per_interval * float(WHEEL_RADIUS) * 2 * PI;
-  float TIME_INTERVAL_floatified = float(TIME_INTERVAL)/float(1000000); 
+float measureVelocity() {
+  float rotationsPerInterval = float(pidElapsedTicks) / float(TICKS_PER_ROTATION); 
+  float metersPerInterval = rotationsPerInterval * float(WHEEL_RADIUS) * 2 * PI;
+  float timeIntervalFloatified = float(TIME_INTERVAL)/float(1000000); 
   pidElapsedTicks = 0; //reset accumilator 
-  return (meters_per_interval / TIME_INTERVAL_floatified);
+  return (metersPerInterval / timeIntervalFloatified);
 }
 
-float measure_accel(float vel, float vel_old){
-  return((vel - vel_old)/(float(TIME_INTERVAL)/float(1000000)));
+float measureAcceleration(float velocity, float velocityOld){
+  return((velocity - velocityOld)/(float(TIME_INTERVAL)/float(1000000)));
 }
 
-float err_amount(float velocity, float goal){
-  return((velocity-goal)/goal);
+float errorAmount(float velocity, float velocityGoal){
+  return((velocity-velocityGoal)/velocityGoal);
 }
 
 float IRAM_ATTR PID() {
-  float PID_raw = myPID.Run(velocity);
-  if (PID_raw > 100) {PID_raw = 100;}
-  pidOutputPWM = (PID_raw*5) + 1500;
-  pidOutputMagnitude = PID_raw / 100.0f;
-  return PID_raw;
+  float pidRAW = myPID.Run(velocity);
+  if (pidRAW > 100) {pidRAW = 100;}
+  pidOutputPWM = (pidRAW*5) + 1500;
+  pidOutputMagnitude = pidRAW / 100.0f;
+  return pidRAW;
 }
 
 //////////
@@ -177,7 +176,7 @@ const uint16_t PIN_CAN_RX = 22;
 const long CAN_BAUDRATE = 500E3;
 
 // Function to setup canbus
-void setup_can() {
+void setupCAN() {
   Serial.println("Initializing CAN Transciever...");
   // Set CAN Pin States
   CAN.setPins(PIN_CAN_RX,PIN_CAN_TX);
@@ -248,9 +247,9 @@ void loop() {
   delayMicroseconds(TIME_INTERVAL);
 
   // Cache old versions of each order term
-  old_velocity = velocity;
-  velocity = measure_velocity();
-  acceleration = measure_accel(velocity, old_velocity);
+  oldVelocity = velocity;
+  velocity = measureVelocity();
+  acceleration = measureAcceleration(velocity, oldVelocity);
 
   // TODO: Make pid function a callback (remove globals for better flow)
 
