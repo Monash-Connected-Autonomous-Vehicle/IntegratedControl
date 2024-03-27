@@ -56,7 +56,7 @@ volatile uint32_t startTimeMicroseconds;
 ////////////////
 
 // Initialise ESP32 Timer 1
-ESP32Timer HTimer(1);
+ESP32Timer ITimer(1);
 
 //////////////////////////////
 // INITIALISE ESP32_ISR_PWM //
@@ -85,7 +85,7 @@ float throttleToDuty(float throttle)
   float mult = 0.01;
   float cons = 7.5;
 
-  // adding 25 because of deadzone
+  // adding 25 because of deadzoneX
   return (throttle + 25) * mult + cons;
 }
 
@@ -106,7 +106,7 @@ void setPWMThrottle(int pin, int channel, float throttle)
 ///////////////////////////////
 #include <PID_v2.h>
 
-volatile float targetVelocity = 0;
+volatile float DRAM_ATTR targetVelocity = 0;
 
 //double Kp = 2, Ki = 5, Kd = 1; 
 double pidGainP = 1, pidGainI = 0.1, pidGainD = 0; 
@@ -120,11 +120,11 @@ float acceleration = 0.0;
 float pidOutputMagnitude = 0.0;
 int pidOutputPWM = 0.0;
 
-volatile int pidElapsedTicks = 0;
-volatile int pidDisplacementTicks = 0; // Global variable for storing the encoder position
+volatile int DRAM_ATTR pidElapsedTicks = 0;
+volatile int DRAM_ATTR pidDisplacementTicks = 0; // Global variable for storing the encoder position
 
 // Interrupt callback function for rotary encoders
-void IRAM_ATTR encoder_isr() {
+void encoder_isr() {
   // Reading the current state of encoder A and B
   int A = digitalRead(PIN_RENC_A1);
   int B = digitalRead(PIN_RENC_A2);
@@ -155,7 +155,7 @@ float errorAmount(float velocity, float velocityGoal){
   return((velocity-velocityGoal)/velocityGoal);
 }
 
-float IRAM_ATTR PID() {
+float PID() {
   float pidRAW = myPID.Run(velocity);
   if (pidRAW > 100) {pidRAW = 100;}
   pidOutputPWM = (pidRAW*5) + 1500;
@@ -212,13 +212,13 @@ void setup() {
   Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
 
   // Setup timer with interval //
-  if (HTimer.attachInterruptInterval(HW_TIMER_INTERVAL_US, TimerHandler))
+  if (ITimer.attachInterruptInterval(HW_TIMER_INTERVAL_US, TimerHandler))
   {
     startTimeMicroseconds = micros();
-    Serial.print(F("Starting HTimer OK, micros() = ")); Serial.println(startTimeMicroseconds);
+    Serial.print(F("Starting ITimer OK, micros() = ")); Serial.println(startTimeMicroseconds);
   }
   else
-    Serial.println(F("Can't set HTimer. Select another freq. or timer"));
+    Serial.println(F("Can't set ITimer. Select another freq. or timer"));
   // TODO: Handle ESC B
   channelNum = ISR_PWM.setPWM_Period(PIN_ESC_A_PWM, PWM_FREQ, 7.5f); // Begins at 1500us 
   Serial.println("Arming ESCS");
@@ -238,6 +238,9 @@ void setup() {
   myPID.Start(velocity,          // input
               0,                 // current output
               targetVelocity);                // TODO: USE CAN VALUE?
+
+  // Setup the can bus
+  setupCAN();
 
 }
 
@@ -264,14 +267,20 @@ void loop() {
   Serial.print("PID:"+ String(pidOutputMagnitude,10)+",");
   Serial.print("PWM:"+ String(pidOutputPWM,10)+",");
 
-  //Serial.print("error:"+ String(err_amount(vel,goal_velocity),10)+",");
-  //Serial.print("zero:"+ String(0,10)+",");
+  // Serial.print("error:"+ String(errorAmount(velocity,targetVelocity),10)+",");
+  // Serial.print("zero:"+ String(0,10)+",");
 
   Serial.println();
 }
 
+union FloatByteUnion
+{
+   byte bytes[4];
+   float real;
+};
+
 void onRecieveCAN(int packetSize) {
-  Serial.print("Recieved ");
+  // Serial.print("Recieved ");
 
   // Handle extended CAN Packet
   if (CAN.packetExtended()) {
@@ -279,47 +288,53 @@ void onRecieveCAN(int packetSize) {
   }
 
   if (CAN.packetRtr()) {
-    Serial.print("RTR ");
+    //Serial.print("RTR ");
     //TODO: HANDLE RTR
   }
 
   // Report Packet ID in Hex
-  Serial.print("packet with id ");
-  Serial.print(CAN.packetId(), HEX);
+  //Serial.print("packet with id ");
+  //Serial.print(CAN.packetId(), HEX);
 
   // Print the requested length if the packet is a Remote Transmit Request
   if (CAN.packetRtr()) {
-    Serial.print(" and requested length ");
-    Serial.print(CAN.packetDlc());
+    //Serial.print(" and requested length ");
+    //Serial.print(CAN.packetDlc());
   }
   // Otherwise it is a normal packet
   else {
     // Print its length
-    Serial.print(" and length ");
-    Serial.print(packetSize);
+    //Serial.print(" and length ");
+    //Serial.print(packetSize);
 
     // Initialise a buffer for the packet data
     // TODO: MAYBE HARDCODE THIS TO 8?
-    byte packetBuffer[packetSize];
+    // packetBuffer[packetSize];
+
     // Read the can packet into the buffer
-    CAN.readBytes((char *)packetBuffer, packetSize);
+    //Serial.print(": Reading CAN packet...");
     
+
     switch (CAN.packetId())
     {
       case CANPacketType::Velocity:
         /* code */
-        Serial.print("Got Velocity: ");
-        float newTargetVelocity;        
-        
-        // Update the target velocity
-        memcpy(&newTargetVelocity, packetBuffer, sizeof(newTargetVelocity));
+        //Serial.print("Got Velocity: ");
+        FloatByteUnion newTargetVelocity;        
+
+        // Read the Velocity from the BUS
+        newTargetVelocity.bytes[0] = CAN.read();
+        newTargetVelocity.bytes[1] = CAN.read();
+        newTargetVelocity.bytes[2] = CAN.read();
+        newTargetVelocity.bytes[3] = CAN.read();
 
         // Change target velocity
-        targetVelocity = newTargetVelocity;
+        targetVelocity = newTargetVelocity.real;
         break;
       
       default:
         break;
     }
+    Serial.println();
   }
 }
