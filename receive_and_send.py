@@ -69,6 +69,8 @@ def pass_data_to_CAN_Bridge():
 
 
 serial_port = '/dev/ttyUSB1' # change back to 0 when USB0 works again
+
+# serial_port = 'COM11'
 baud_rate = 115200
 serial_connection = serial.Serial(serial_port, baud_rate, timeout=1, bytesize=8)
 
