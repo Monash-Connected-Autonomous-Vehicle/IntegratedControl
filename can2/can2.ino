@@ -5,9 +5,13 @@
 #define TX_GPIO_NUM   21  // Connects to CTX
 #define RX_GPIO_NUM   22  // Connects to CRX
 
+
 //==================================================================================//
 
 void setup() {
+
+  
+  //pinMode(15, LOW);
   Serial.begin (115200);
   while (!Serial);
   delay (10);

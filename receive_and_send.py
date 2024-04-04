@@ -39,18 +39,21 @@ def get_data_from_CAN_bridge():
     
 
 def pass_data_to_CAN_Bridge():
-    data = 69
-
+    idToSend = 42
+    dataToSend = 19
 
     packet = bytearray()
-    packet.append(69)
+    packet.append(idToSend)
+    packet.append(dataToSend)
+    
 
     val = 42069.214
     while True:
         
 
-        print(packet)
-
+        serial_connection.write(packet)
+        print(f"The packet being sent is: {packet}")
+        
 
 
 
@@ -58,8 +61,8 @@ def pass_data_to_CAN_Bridge():
         ##serial_connection.write(binary_out)
         ##serial_connection.write(binary_data.encode('utf-8'))
         sleep(1000)
-        serial_connection.write(packet)
-        print(data)
+        #serial_connection.write(packet)
+        #print(f"The packet is: {packet}")
         
     except serial.SerialException as e:
         print("bruh: " + e)
@@ -77,10 +80,10 @@ serial_connection = serial.Serial(serial_port, baud_rate, timeout=1, bytesize=8)
 cntr = 0
 while True:
     try:
-        get_data_from_CAN_bridge()
+        # get_data_from_CAN_bridge()
 
-        # pass_data_to_CAN_Bridge()
-
+        pass_data_to_CAN_Bridge()
+        
         
 
     except serial.SerialException as e:
