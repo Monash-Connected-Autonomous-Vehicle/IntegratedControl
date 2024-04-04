@@ -49,13 +49,8 @@ def pass_data_to_CAN_Bridge():
 
     val = 42069.214
     while True:
-        
-
         serial_connection.write(packet)
         print(f"The packet being sent is: {packet}")
-        
-
-
 
     try:
         ##serial_connection.write(binary_out)
@@ -81,10 +76,7 @@ cntr = 0
 while True:
     try:
         # get_data_from_CAN_bridge()
-
         pass_data_to_CAN_Bridge()
         
-        
-
     except serial.SerialException as e:
         print("BRUH: " + e)
