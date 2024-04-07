@@ -48,14 +48,15 @@ def pass_data_to_CAN_Bridge():
     
 
     val = 42069.214
-    while True:
+    # while True:
+    try:
         serial_connection.write(packet)
         print(f"The packet being sent is: {packet}")
 
-    try:
+    # try:
         ##serial_connection.write(binary_out)
         ##serial_connection.write(binary_data.encode('utf-8'))
-        sleep(1000)
+        # sleep(1000)
         #serial_connection.write(packet)
         #print(f"The packet is: {packet}")
         
@@ -66,7 +67,7 @@ def pass_data_to_CAN_Bridge():
     
 
 
-serial_port = '/dev/ttyUSB1' # change back to 0 when USB0 works again
+serial_port = '/dev/ttyUSB2' # change back to 0 when USB0 works again
 
 # serial_port = 'COM11'
 baud_rate = 115200
@@ -75,8 +76,8 @@ serial_connection = serial.Serial(serial_port, baud_rate, timeout=1, bytesize=8)
 cntr = 0
 while True:
     try:
-        # get_data_from_CAN_bridge()
-        pass_data_to_CAN_Bridge()
+        get_data_from_CAN_bridge()
+        # pass_data_to_CAN_Bridge()
         
     except serial.SerialException as e:
         print("BRUH: " + e)

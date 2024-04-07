@@ -14,7 +14,7 @@ void setup() {
   //pinMode(15, LOW);
   Serial.begin (115200);
   while (!Serial);
-  delay (10);
+  delay (1000);
 
   Serial.println ("CAN Receiver/Receiver");
 
@@ -34,8 +34,8 @@ void setup() {
 //==================================================================================//
 
 void loop() {
-  // canForwarderSender();
   canSender();
+  // canSenderTesting(); // testing for controller
   delay(1000);
   // canReceiver();
 }
@@ -87,14 +87,12 @@ void canSender() {
   byte preambleBuffer = 0;
   // byte ID = 69;
   int ID = 24;
-  float data = 69;
-
-  byte buffer[1+ sizeof(float)]; // originally: byte buffer[sizeof(byte) + sizeof(double)];
+  float data = 69;  
+  
+  byte buffer[1 + sizeof(float)]; // originally: byte buffer[sizeof(byte) + sizeof(double)];
 
   memcpy(buffer, &ID, sizeof(byte)); // originally: memcpy(buffer, &ID, sizeof(byte))
   memcpy(buffer + 1, &data, sizeof(float)); 
-
-  // memcpy(buffer + sizeof(int), &data, sizeof(float)); 
 
   CAN.write(buffer, sizeof(buffer));
 
@@ -109,6 +107,45 @@ void canSender() {
   Serial.print("Buffer content: ");
   for (int i = 0; i < sizeof(buffer); i++) {
     Serial.print(buffer[i], HEX);
+    Serial.print(" ");
+  }
+  Serial.println();
+  Serial.println();
+
+  // delay (1000);
+}
+
+void canSenderTesting() {
+  // send packet: id is 11 bits, packet can contain up to 8 bytes of data
+  Serial.print ("Sending packet ... ");
+
+  // This identifier can't been found on receiving python side 
+  CAN.beginPacket(0x11);
+  byte preambleBuffer = 0;
+  // byte ID = 69;
+  int ID = 24;
+  int data = 69;  
+  int data2 = 1;
+  
+  byte buffer[3]; // originally: byte buffer[sizeof(byte) + sizeof(double)];
+
+  memcpy(buffer, &ID, sizeof(byte)); // originally: memcpy(buffer, &ID, sizeof(byte))
+  memcpy(buffer + 1, &data, sizeof(int)); 
+  memcpy(buffer + 1 + 1, &data2, sizeof(int));
+
+  CAN.write(buffer, sizeof(buffer));
+
+  CAN.endPacket();
+
+  //RTR packet with a requested data length
+  // CAN.beginPacket (0x12, 3, true);
+  // CAN.endPacket();
+
+  Serial.println ("done");
+  Serial.println(sizeof(buffer));
+  Serial.print("Buffer content: ");
+  for (int i = 0; i < sizeof(buffer); i++) {
+    Serial.print(buffer[i], DEC);
     Serial.print(" ");
   }
   Serial.println();
