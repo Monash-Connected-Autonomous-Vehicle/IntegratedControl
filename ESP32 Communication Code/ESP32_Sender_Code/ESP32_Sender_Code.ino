@@ -53,17 +53,12 @@ void setup() {
 
 void loop() {
 
-  data_var.xValuePack = analogRead(VRX_PIN_LEFT_JOYSTICK);
-  data_var.yValuePack = analogRead(VRY_PIN_RIGHT_JOYSTICK);
+  data_var.xValuePack = analogRead(VRX_PIN_LEFT_JOYSTICK) >> 4;
+  data_var.yValuePack = analogRead(VRY_PIN_RIGHT_JOYSTICK) >> 4;
   data_var.buttonState = digitalRead(button);
   data_var.togSwitchVal = digitalRead(toggle_switch);
   currentMillis = millis();
   if (currentMillis - prevMillis >= txIntervalMillis) {
-    // Serial.print("x = ");
-    // Serial.print(data_var.xValuePack);
-    // Serial.print(", y = ");
-    // Serial.println(data_var.yValuePack);
-
     send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
     prevMillis = millis();
   }

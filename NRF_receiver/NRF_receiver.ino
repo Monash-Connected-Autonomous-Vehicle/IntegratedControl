@@ -9,8 +9,8 @@
 #define IRQ_PIN 5
 
 // CAN
-#define TX_GPIO_NUM   15  // Connects to CTX
-#define RX_GPIO_NUM   2  // Connects to CRX
+#define TX_GPIO_NUM   2  // Connects to CTX
+#define RX_GPIO_NUM   15  // Connects to CRX
 
 // button debounce
 #define debounce  10
@@ -36,6 +36,7 @@ void IRAM_ATTR radio_ISR(){
 void getData(){
   Serial.print("e\n");
   radio.read(&inData, sizeof(inData));
+  Serial.print(inData.xValuePack);
 }
 
 void sendCAN() {

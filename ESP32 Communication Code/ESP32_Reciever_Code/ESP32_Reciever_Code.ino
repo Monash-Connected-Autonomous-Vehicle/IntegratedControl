@@ -4,6 +4,7 @@
 #include <SPI.h>
 #include <RF24.h>
 #include <nRF24L01.h>
+#include <CAN.h>
 
 #define SERVO1 1
 #define SERVO2 2
@@ -12,6 +13,10 @@
 
 #define CE_PIN  22
 #define CSN_PIN 21
+
+#define TX_GPIO_PIN 2
+#define RX_GPIO_PIN 15
+
 const byte thisSlaveAddress[5] = {'R', 'x', 'A', 'A', 'A'};
 RF24 radio(CE_PIN, CSN_PIN);
 char dataReceived[10]; // this must match dataToSend in the TX
@@ -32,28 +37,44 @@ data_pack data_var;
 void setup()
 {
   Serial.begin(115200);
+  while(!Serial);
   delay(3000);
-  Serial.println("SimpleRx Starting");
   radio.begin();
   radio.setDataRate(RF24_250KBPS);
   radio.openReadingPipe(1, thisSlaveAddress);
   radio.startListening();
   pinMode(LED_BUTTON, OUTPUT);
   pinMode(LED_SWITCH, OUTPUT);
+  Serial.println("SimpleRx Starting");
+  CAN.setPins(RX_GPIO_PIN, TX_GPIO_PIN);
+  if (!CAN.begin (500E3)) {
+    Serial.println ("Starting CAN failed!");
+    while (1);
+  }
+  else {
+    Serial.println ("CAN Initialized");
+  }
+
+
+
+
+  
 }
 //=============
 void loop()
 {
    getData();
+   delay(100);
+   canSender();
    showData();
-   ledLightUp();
+   //ledLightUp();
 }
 //==============
 void getData()
 {
   if (radio.available()){
     radio.read(&data_var, sizeof(data_var));
-      
+    
     newData = true;
   }
 }
@@ -89,4 +110,33 @@ void ledLightUp(){
   } else{
     digitalWrite(LED_SWITCH, LOW);
   }
+}
+
+void canSender(){
+  Serial.print("Sending packet ...");
+  CAN.beginPacket(0x11);
+  int ID = 1; 
+  int xDataToCan = data_var.xValuePack;
+  int yDataToCan = data_var.yValuePack;
+  int buttonDataToCan = data_var.buttonState;
+  int toggleSwitchDataToCan = data_var.togSwitchVal;
+  byte buffer[5];
+  memcpy(buffer, &ID, sizeof(byte));
+  memcpy(buffer + 1, &xDataToCan, sizeof(int)); 
+  memcpy(buffer + 2, &yDataToCan, sizeof(int));
+  memcpy(buffer + 3, &buttonDataToCan, sizeof(int));
+  memcpy(buffer + 4, &toggleSwitchDataToCan, sizeof(int));
+  CAN.write(buffer, sizeof(buffer));
+
+  CAN.endPacket();
+
+  Serial.println ("done");
+  Serial.println(sizeof(buffer));
+  Serial.print("Buffer content: ");
+  for (int i = 0; i < sizeof(buffer); i++) {
+    Serial.print(buffer[i], DEC);
+    Serial.print(" ");
+  }
+  Serial.println();
+  Serial.println();
 }

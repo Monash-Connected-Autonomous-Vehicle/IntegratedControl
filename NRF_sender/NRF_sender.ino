@@ -39,6 +39,9 @@ void updateInput() {
   outData.yValuePack = analogRead(VRY_PIN_RIGHT_JOYSTICK);
   outData.buttonState = digitalRead(BUTTON);
   outData.togSwitchVal = digitalRead(TOGGLE_SWITCH);
+
+  
+
 }
 void send() {
   currentMillis = millis();
@@ -73,9 +76,19 @@ void setup() {
   attachInterrupt(TOGGLE_SWITCH, dataISR, CHANGE);
 }
 
+// bool updatePrev(){
+  
+// }
+
 void loop() {
+  updateInput();
+  // if (updatePrev()){
+    
+  // }
   // put your main code here, to run repeatedly:
+  Serial.printf("right_x: %d, right_y: %d\n", outData.xValuePack, outData.yValuePack);
   if (dataChange){
+    
     updateInput();
     send();
     dataChange = false;
