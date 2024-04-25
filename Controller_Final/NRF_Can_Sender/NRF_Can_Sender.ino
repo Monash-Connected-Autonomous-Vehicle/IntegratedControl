@@ -32,8 +32,8 @@ unsigned long txIntervalMillis = 200;  // send once per second
 struct data_pack {
   float xValuePack;
   float yValuePack;
-  int buttonState;
-  int togSwitchVal;
+  float buttonState;
+  float togSwitchVal;
 };
 
 float xToSend = 0;
@@ -64,6 +64,7 @@ void loop() {
   
   yToSend = (float) data_var.yValuePack;
   xToSend = (float) data_var.xValuePack;
+
 
   data_var.yValuePack = mapFunc(yToSend, 0, 255, -2.22, 2.22);
   data_var.xValuePack = mapFunc(xToSend, 0, 255, -2.22, 2.22);
