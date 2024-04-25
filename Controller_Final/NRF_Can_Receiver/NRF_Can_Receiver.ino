@@ -25,8 +25,8 @@ int yValData;
 bool newData = false;
 
 struct data_pack{
-  int xValuePack;
-  int yValuePack;
+  float xValuePack;
+  float yValuePack;
   int buttonState;
   int togSwitchVal;
 };
@@ -178,7 +178,3 @@ void ledLightUp(){
 // }
 
 
-// float mapFunc(float x, float in_min, float in_max, float out_min, float out_max)
-// {
-//   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-// }

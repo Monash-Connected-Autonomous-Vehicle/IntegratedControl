@@ -30,11 +30,14 @@ unsigned long prevMillis;
 unsigned long txIntervalMillis = 200;  // send once per second
 
 struct data_pack {
-  int xValuePack;
-  int yValuePack;
+  float xValuePack;
+  float yValuePack;
   int buttonState;
   int togSwitchVal;
 };
+
+float xToSend = 0;
+float yToSend = 0;
 
 data_pack data_var;
 
@@ -57,6 +60,17 @@ void loop() {
   data_var.yValuePack = analogRead(VRY_PIN_RIGHT_JOYSTICK) >> 4;
   data_var.buttonState = digitalRead(button);
   data_var.togSwitchVal = digitalRead(toggle_switch);
+
+  
+  yToSend = (float) data_var.yValuePack;
+  xToSend = (float) data_var.xValuePack;
+
+  data_var.yValuePack = mapFunc(yToSend, 0, 255, -2.22, 2.22);
+  data_var.xValuePack = mapFunc(xToSend, 0, 255, -2.22, 2.22);
+  if(data_var.yValuePack > -0.3 && data_var.yValuePack < -0.2)
+    data_var.yValuePack = 0;
+  
+
   currentMillis = millis();
   if (currentMillis - prevMillis >= txIntervalMillis) {
     send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
@@ -64,7 +78,7 @@ void loop() {
   }
 }
 
-void send(int X_VAL_HORIZONTAL, int Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_VAL) {
+void send(float X_VAL_HORIZONTAL, float Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_VAL) {
   bool rslt_data_bool, rslt_button_bool;
 
   //  rslt_message = radio.write(&dataToSend, sizeof(dataToSend));
@@ -97,4 +111,9 @@ void updateMessage() {
     txNum = '0';
   }
   dataToSend[8] = txNum;
+}
+
+float mapFunc(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
