@@ -18,8 +18,8 @@
 int xValue = 0;  // Initial position at (0,0)
 int yValue = 0;  // Initial position at (0,0)
 
-// int prevState = HIGH;
-// int currentState;
+int velPrev = 0;
+
 
 const byte thisSlaveAddress[5] = { 'R', 'x', 'A', 'A', 'A' };
 RF24 radio(CE_PIN, CSN_PIN);
@@ -66,6 +66,7 @@ void loop() {
   xToSend = (float) data_var.xValuePack;
 
 
+
   data_var.yValuePack = mapFunc(yToSend, 0, 255, -2.22, 2.22);
   data_var.xValuePack = mapFunc(xToSend, 0, 255, -2.22, 2.22);
   if(data_var.yValuePack > -0.3 && data_var.yValuePack < -0.2)
@@ -73,9 +74,14 @@ void loop() {
   
 
   currentMillis = millis();
-  if (currentMillis - prevMillis >= txIntervalMillis) {
-    send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
-    prevMillis = millis();
+  if(velPrev != data_var.yValuePack){
+    if (currentMillis - prevMillis >= txIntervalMillis) {
+      send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
+      velPrev =  data_var.yValuePack;
+      prevMillis = millis();
+    }
+   //} else {
+    // data_var.yValuePack = 0;
   }
 }
 

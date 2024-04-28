@@ -46,14 +46,14 @@ void setup()
   pinMode(LED_BUTTON, OUTPUT);
   pinMode(LED_SWITCH, OUTPUT);
   Serial.println("SimpleRx Starting");
-  CAN.setPins(RX_GPIO_PIN, TX_GPIO_PIN);
-  if (!CAN.begin (500E3)) {
-    Serial.println ("Starting CAN failed!");
-    while (1);
-  }
-  else {
-    Serial.println ("CAN Initialized");
-  }
+  // CAN.setPins(RX_GPIO_PIN, TX_GPIO_PIN);
+  // if (!CAN.begin (500E3)) {
+  //   Serial.println ("Starting CAN failed!");
+  //   while (1);
+  // }
+  // else {
+  //   Serial.println ("CAN Initialized");
+  // }
 
 }
 //=============
@@ -64,16 +64,16 @@ void loop()
 //  canSender500();
 
   // Float 1: X-Value (This is going to be changed to the steering angle or equivalent value)
-  canSenderFinal(1, data_var.xValuePack);
+  // canSenderFinal(1, data_var.xValuePack);
 
-  // Float 2: Y-Value (This is the target velocity)
-  canSenderFinal(2, data_var.yValuePack);
+  // // Float 2: Y-Value (This is the target velocity)
+  // canSenderFinal(2, data_var.yValuePack);
 
-  // Float 3: Button value (On/Off value maybe?)
-  canSenderFinal(3, data_var.buttonState);
+  // // Float 3: Button value (On/Off value maybe?)
+  // canSenderFinal(3, data_var.buttonState);
 
-  // Float 4: 
-  canSenderFinal(4, data_var.togSwitchVal);
+  // // Float 4: 
+  // canSenderFinal(4, data_var.togSwitchVal);
 
   showData();
   //ledLightUp();
