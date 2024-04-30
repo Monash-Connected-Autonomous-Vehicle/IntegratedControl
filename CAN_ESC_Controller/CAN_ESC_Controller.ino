@@ -12,7 +12,7 @@
 */
 
 // ENUM DEFINITIONS
-enum ESDACanMessage {
+enum ESDACanMessageID {
     SetTargetVelLeft = 1,
     SetTargetVelRight = 2,
     CurrentVelLeft = 3,
@@ -33,11 +33,14 @@ const float WHEEL_RADIUS = 0.13;      //Unit: Metres
 
 // // Pin Definitions
 const uint32_t PIN_ESC_A_PWM = 26; // PWM Output Pin for ESC A
-//const uint32_t PIN_ESC_B_PWM = 15; // PWM Output Pin for ESC B
-const uint32_t PIN_RENC_A1 = 17;  // Pin for Rotary Encoder A
-const uint32_t PIN_RENC_A2 = 33;  // Pin for Rotary Encoder B 34?
-//const uint32_t PIN_RENC_B1 = ;  // Pin for Rotary Encoder A
-//const uint32_t PIN_RENC_B2 = ;  // Pin for Rotary Encoder B
+const uint32_t PIN_ESC_B_PWM = 16; // PWM Output Pin for ESC B
+
+const uint32_t PIN_RENC_L1 = 18;  // Pin 1 for Left Rotary Encoder
+const uint32_t PIN_RENC_L2 = 19;  // Pin 2 for Left Rotary Encoder
+const uint32_t PIN_RENC_L3 = 21;  // Pin 3 for Left Rotary Encoder
+const uint32_t PIN_RENC_R1 = 34;   // Pin 1 for Right Rotary Encoder
+const uint32_t PIN_RENC_R2 = 33;   // Pin 2 for Right Rotary Encoder
+const uint32_t PIN_RENC_R3 = 32;   // Pin 3 for Right Rotary Encoder
 
 // #define HW_TIMER_INTERVAL_US 20L
 // #define TIME_INTERVAL 100000   //Unit: Microseconds
@@ -123,48 +126,51 @@ void setPWMThrottle(int pin, int channel, float throttle)
 ///////////////////////////////
 #include <PID_v2.h>
 
-volatile float DRAM_ATTR targetVelocity = 0;
-
+volatile float DRAM_ATTR targetVelocities[2] = {0,0};
 //double Kp = 2, Ki = 5, Kd = 1; 
 double pidGainP = 1, pidGainI = 0.1, pidGainD = 0; 
-PID_v2 myPID(pidGainP, pidGainI, pidGainD, PID::Direct);
+PID_v2 leftPID(pidGainP, pidGainI, pidGainD, PID::Direct);
+PID_v2 rightPID(pidGainP, pidGainI, pidGainD, PID::Direct);
 
 // Kinematics 
-float pidErr = 0.0;
-float velocity = 0.0;
-float oldVelocity = 0.0;
-float acceleration = 0.0;
-float pidOutputMagnitude = 0.0;
-int pidOutputPWM = 0.0;
+float pidErr[2] = {0.0,0.0};
+float velocity[2] = {0.0,0.0};
+float oldVelocity[2] = {0.0,0.0};
+float acceleration[2] = {0.0,0.0};
+float pidOutputMagnitude[2] = {0.0,0.0};
+int pidOutputPWM[2] = {0.0,0.0};
 
-volatile int DRAM_ATTR pidElapsedTicks = 0;
-volatile int DRAM_ATTR pidDisplacementTicks = 0; // Global variable for storing the encoder position
+volatile int DRAM_ATTR pidElapsedTicks[2] = {0.0,0.0};;
+volatile int DRAM_ATTR pidDisplacementTicks[2] = {0.0,0.0}; // Global variable for storing the encoder position
 
 // Interrupt callback function for rotary encoders
 void encoder_isr() {
-    // Reading the current state of encoder A and B
-    int A = digitalRead(PIN_RENC_A1);
-    int B = digitalRead(PIN_RENC_A2);
-    // If the state of A changed, it means the encoder has been rotated
-    if ((A == HIGH) != (B == LOW)) {
-        pidDisplacementTicks--;
-        pidElapsedTicks--;
-    } else {
-        pidDisplacementTicks++;
-        pidElapsedTicks++;
+    // Process each side
+    for (int side = 0; side >= 1; side++) {
+        // Reading the current state of encoder A
+        int encPin1Val = digitalRead(PIN_RENC_L1);
+        int encPin2Val = digitalRead(PIN_RENC_L2);
+        // If the state of A changed, it means the encoder has been rotated
+        if ((encPin1Val == HIGH) != (encPin2Val == LOW)) {
+        pidDisplacementTicks[side]--;
+        pidElapsedTicks[side]--;
+        } else {
+            pidDisplacementTicks[side]++;
+            pidElapsedTicks[side]++;
+        }
     }
 }
 
 // Math function for ang disp -> lin vel
-float measureVelocity() {
-    float rotationsPerInterval = float(pidElapsedTicks) / float(TICKS_PER_ROTATION); 
+float measureVelocity(int side) {
+    float rotationsPerInterval = float(pidElapsedTicks[side]) / float(TICKS_PER_ROTATION); 
     float metersPerInterval = rotationsPerInterval * float(WHEEL_RADIUS) * 2 * PI;
     float timeIntervalFloatified = float(TIME_INTERVAL)/float(1000000); 
-    pidElapsedTicks = 0; //reset accumilator 
+    pidElapsedTicks[side] = 0; //reset accumilator 
     return (metersPerInterval / timeIntervalFloatified);
 }
 
-float measureAcceleration(float velocity, float velocityOld){
+float calculateAcceleration(float velocity, float velocityOld){
     return((velocity - velocityOld)/(float(TIME_INTERVAL)/float(1000000)));
 }
 
@@ -172,11 +178,18 @@ float errorAmount(float velocity, float velocityGoal){
     return((velocity-velocityGoal)/velocityGoal);
 }
 
-float PID() {
-    float pidRAW = myPID.Run(velocity);
+float PIDTickLeft() {
+    float pidRAW = leftPID.Run(velocity[0]);
     if (pidRAW > 100) {pidRAW = 100;}
-    pidOutputPWM = (pidRAW*5) + 1500;
-    pidOutputMagnitude = pidRAW / 100.0f;
+    pidOutputPWM[0] = (pidRAW*5) + 1500;
+    pidOutputMagnitude[0] = pidRAW / 100.0f;
+    return pidRAW;
+}
+float PIDTickRight() {
+    float pidRAW = rightPID.Run(velocity[1]);
+    if (pidRAW > 100) {pidRAW = 100;}
+    pidOutputPWM[1] = (pidRAW*5) + 1500;
+    pidOutputMagnitude[1] = pidRAW / 100.0f;
     return pidRAW;
 }
 
@@ -246,15 +259,19 @@ void setup() {
     /////////////////////
 
     // Set Encoder A PinModes
-    pinMode(PIN_RENC_A1, INPUT_PULLUP);
-    pinMode(PIN_RENC_A2, INPUT_PULLUP);
+    pinMode(PIN_RENC_L1, INPUT_PULLUP);
+    pinMode(PIN_RENC_L2, INPUT_PULLUP);
 
     // Attaching the ISR to encoder A
-    attachInterrupt(digitalPinToInterrupt(PIN_RENC_A1), encoder_isr, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(PIN_RENC_L1), encoder_isr, CHANGE);
 
-    myPID.Start(velocity,          // input
-                0,                 // current output
-                targetVelocity);                // TODO: USE CAN VALUE?
+    leftPID.Start(velocity[0],          // input
+                0,                      // current output
+                targetVelocities[0]); 
+
+    rightPID.Start(velocity[1],          // input
+                0,                      // current output
+                targetVelocities[1]); 
 
     // Setup the can bus
     // setupCAN();
@@ -266,14 +283,19 @@ void setup() {
     // TODO: Convert global sleep to ISR Delay
     delayMicroseconds(TIME_INTERVAL);
 
-    // Cache old versions of each order term
-    oldVelocity = velocity;
-    velocity = measureVelocity();
-    acceleration = measureAcceleration(velocity, oldVelocity);
+    for (int side = 0; side <= 1; side++) {
+        // Cache old versions of each order term
+        oldVelocity[side] = velocity[side];
+        velocity[side] = measureVelocity(side);
+        acceleration[side] = calculateAcceleration(velocity[side], oldVelocity[side]);
+    }
+
 
     // TODO: Make pid function a callback (remove globals for better flow)
 
-    setPWMThrottle(PIN_ESC_A_PWM,channelNum,PID());
+    setPWMThrottle(PIN_ESC_A_PWM,channelNum,PIDTickLeft());
+    setPWMThrottle(PIN_ESC_B_PWM,channelNum,PIDTickRight());
+
 
     // use this print format so you can disable individual plots on the plotter window
     //Serial.print("zeroline...Div's_displacement:"+ String(0,10)+",");
@@ -297,6 +319,9 @@ union FloatByteUnion
 };
 
 void onRecieveCAN(int packetSize) {
+    // Store packetID
+    ESDACanMessageID packetID = (ESDACanMessageID)CAN.packetId();
+
     // Serial.print("Recieved ");
 
     // Handle extended CAN Packet
@@ -330,23 +355,24 @@ void onRecieveCAN(int packetSize) {
 
         // Read the can packet into the buffer
         //Serial.print(": Reading CAN packet...");
-        
 
-        switch (CAN.packetId())
+        FloatByteUnion packetInnerValue;
+
+        // Read the Velocity from the BUS
+        packetInnerValue.bytes[0] = CAN.read();
+        packetInnerValue.bytes[1] = CAN.read();
+        packetInnerValue.bytes[2] = CAN.read();
+        packetInnerValue.bytes[3] = CAN.read();
+
+
+        // Update corresponding target velocity
+        switch (packetID)
         {
-            case ESDACanMessage::SetTargetVelLeft:
-            /* code */
-            //Serial.print("Got Velocity: ");
-            FloatByteUnion newTargetVelocity;        
-
-            // Read the Velocity from the BUS
-            newTargetVelocity.bytes[0] = CAN.read();
-            newTargetVelocity.bytes[1] = CAN.read();
-            newTargetVelocity.bytes[2] = CAN.read();
-            newTargetVelocity.bytes[3] = CAN.read();
-
-            // Change target velocity
-            targetVelocity = newTargetVelocity.real;
+            case ESDACanMessageID::SetTargetVelLeft:
+            targetVelocities[0] = packetInnerValue.real;
+            break;
+            case ESDACanMessageID::SetTargetVelRight:
+            targetVelocities[1] = packetInnerValue.real;
             break;
         
         default:
