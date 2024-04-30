@@ -13,24 +13,25 @@
 
 #define CE_PIN  22
 #define CSN_PIN 21
+#define CHANNEL  76
 
 #define TX_GPIO_PIN 15
 #define RX_GPIO_PIN 2
 
 // ENUM DEFINITIONS
-enum ESDACanMessageID {
-    SetTargetVelLeft = 1,
-    SetTargetVelRight = 2,
-    CurrentVelLeft = 3,
-    CurrentVelRight = 4,
-    CurrentDSPLeft = 5,
-    CurrentDSPRight = 6,
-    SteerAmount = 7,
-    MCUState = 16,
-    MCUErrorState = 17,
-    ESTOP = 8,
-    SetAutonomousMode = 9,
-};
+// enum ESDACanMessageID {
+//     SetTargetVelLeft = 1,
+//     SetTargetVelRight = 2,
+//     CurrentVelLeft = 3,
+//     CurrentVelRight = 4,
+//     CurrentDSPLeft = 5,
+//     CurrentDSPRight = 6,
+//     SteerAmount = 7,
+//     MCUState = 16,
+//     MCUErrorState = 17,
+//     ESTOP = 8,
+//     SetAutonomousMode = 9,
+// };
 
 const byte thisSlaveAddress[5] = {'R', 'x', 'A', 'A', 'A'};
 RF24 radio(CE_PIN, CSN_PIN);
@@ -55,6 +56,7 @@ void setup()
   // while(!Serial);
   delay(3000);
   radio.begin();
+  radio.setChannel(CHANNEL); // Set the channel frequency
   radio.setDataRate(RF24_250KBPS);
   radio.openReadingPipe(1, thisSlaveAddress);
   radio.startListening();
@@ -79,17 +81,17 @@ void loop()
 //  canSender500();
 
   // Float 1: X-Value (This is going to be changed to the steering angle or equivalent value)
-  canSenderFinal(ESDACanMessageID::SteerAmount, data_var.xValuePack);
+  canSenderFinal(7, data_var.xValuePack);
 
   // // // Float 2: Y-Value (This is the target velocity)
-  canSenderFinal(ESDACanMessageID::SetTargetVelLeft, data_var.yValuePack);
-  canSenderFinal(ESDACanMessageID::SetTargetVelRight, data_var.yValuePack);
+  canSenderFinal(1, data_var.yValuePack);
+  canSenderFinal(2, data_var.yValuePack);
 
   // // // Float 3: Button value (On/Off value maybe?)
-  canSenderFinal(ESTOP, data_var.buttonState);
+  canSenderFinal(8, data_var.buttonState);
 
   // // // Float 4: 
-  canSenderFinal(4, data_var.togSwitchVal);
+  canSenderFinal(10, data_var.togSwitchVal);
 
   showData();
   //ledLightUp();

@@ -9,6 +9,7 @@
 
 #define CE_PIN 22
 #define CSN_PIN 21
+#define CHANNEL  76
 
 #define VRX_PIN_LEFT_JOYSTICK 35   // Controls Left Joystick. X position (Horizontal)
 #define VRY_PIN_RIGHT_JOYSTICK 34  // Controls Right Joystick. Y position (Vertical)
@@ -55,6 +56,7 @@ void setup() {
   pinMode(VRY_PIN_RIGHT_JOYSTICK, INPUT);
   Serial.println("SimpleTx Starting");
   radio.begin();
+  radio.setChannel(CHANNEL); // Set the channel frequency
   radio.setDataRate(RF24_250KBPS);
   radio.setRetries(3, 5);  // delay, count
   radio.openWritingPipe(thisSlaveAddress);
@@ -83,7 +85,7 @@ void loop() {
   
 
   currentMillis = millis();
-  if(velPrev < data_var.yValuePack - 0.3 || velPrev > data_var.yValuePack + 0.3){
+  if(velPrev != data_var.yValuePack){
     if (currentMillis - prevMillis >= txIntervalMillis) {
       send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
       velPrev =  data_var.yValuePack;
