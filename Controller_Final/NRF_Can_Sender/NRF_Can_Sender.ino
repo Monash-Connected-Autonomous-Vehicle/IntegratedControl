@@ -77,13 +77,13 @@ void loop() {
 
 
   data_var.yValuePack = mapFunc(yToSend, 0, 255, -2.22, 2.22);
-  data_var.xValuePack = mapFunc(xToSend, 0, 255, -2.22, 2.22);
+  data_var.xValuePack = mapFunc(xToSend, 0, 255, -4000, 4000);
   if(data_var.yValuePack > -0.21 && data_var.yValuePack < 0)
     data_var.yValuePack = 0;
   
 
   currentMillis = millis();
-  // if(velPrev != data_var.yValuePack){
+  if(velPrev != data_var.yValuePack){
     if (currentMillis - prevMillis >= txIntervalMillis) {
       send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
       velPrev =  data_var.yValuePack;
@@ -91,7 +91,7 @@ void loop() {
     }
    //} else {
     // data_var.yValuePack = 0;
-  // }
+  }
 }
 
 void send(float X_VAL_HORIZONTAL, float Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_VAL) {
