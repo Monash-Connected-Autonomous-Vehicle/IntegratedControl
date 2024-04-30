@@ -140,10 +140,10 @@ float velocity[2] = {0.0,0.0};
 float oldVelocity[2] = {0.0,0.0};
 float acceleration[2] = {0.0,0.0};
 float pidOutputMagnitude[2] = {0.0,0.0};
-int pidOutputPWM[2] = {0.0,0.0};
+int pidOutputPWM[2] = {0,0};
 
-volatile int DRAM_ATTR pidElapsedTicks[2] = {0.0,0.0};;
-volatile int DRAM_ATTR pidDisplacementTicks[2] = {0.0,0.0}; // Global variable for storing the encoder position
+volatile int DRAM_ATTR pidElapsedTicks[2] = {0,0};
+volatile int DRAM_ATTR pidDisplacementTicks[2] = {0,0}; // Global variable for storing the encoder position
 
 // Interrupt callback function for rotary encoders
 void encoder_isr() {
