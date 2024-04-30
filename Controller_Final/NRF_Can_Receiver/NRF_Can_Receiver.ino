@@ -17,6 +17,21 @@
 #define TX_GPIO_PIN 15
 #define RX_GPIO_PIN 2
 
+// ENUM DEFINITIONS
+enum ESDACanMessageID {
+    SetTargetVelLeft = 1,
+    SetTargetVelRight = 2,
+    CurrentVelLeft = 3,
+    CurrentVelRight = 4,
+    CurrentDSPLeft = 5,
+    CurrentDSPRight = 6,
+    SteerAmount = 7,
+    MCUState = 16,
+    MCUErrorState = 17,
+    ESTOP = 8
+    SetAutonomousMode = 9
+};
+
 const byte thisSlaveAddress[5] = {'R', 'x', 'A', 'A', 'A'};
 RF24 radio(CE_PIN, CSN_PIN);
 char dataReceived[10]; // this must match dataToSend in the TX
@@ -64,13 +79,14 @@ void loop()
 //  canSender500();
 
   // Float 1: X-Value (This is going to be changed to the steering angle or equivalent value)
-  canSenderFinal(1, data_var.xValuePack);
+  canSenderFinal(ESDACanMessageID::SteerAmount, data_var.xValuePack);
 
   // // // Float 2: Y-Value (This is the target velocity)
-  canSenderFinal(2, data_var.yValuePack);
+  canSenderFinal(ESDACanMessageID::SetTargetVelLeft, data_var.yValuePack);
+  canSenderFinal(ESDACanMessageID::SetTargetVelRight, data_var.yValuePack);
 
   // // // Float 3: Button value (On/Off value maybe?)
-  canSenderFinal(3, data_var.buttonState);
+  canSenderFinal(ESTOP, data_var.buttonState);
 
   // // // Float 4: 
   canSenderFinal(4, data_var.togSwitchVal);
