@@ -28,8 +28,8 @@ enum ESDACanMessageID {
     SteerAmount = 7,
     MCUState = 16,
     MCUErrorState = 17,
-    ESTOP = 8
-    SetAutonomousMode = 9
+    ESTOP = 8,
+    SetAutonomousMode = 9,
 };
 
 const byte thisSlaveAddress[5] = {'R', 'x', 'A', 'A', 'A'};
