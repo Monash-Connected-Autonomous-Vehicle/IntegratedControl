@@ -63,7 +63,8 @@ const uint32_t PIN_RENC_R3 = 32;   // Pin 3 for Right Rotary Encoder
 // DEFINITIONS NEEDED FOR ESC: //
 /////////////////////////////////
 
-#define _PWM_LOGLEVEL_          3
+// Masx 4
+#define _PWM_LOGLEVEL_ 0
 #define USING_MICROS_RESOLUTION true
 // Default is true, uncomment to false
 // Unsure what this does, from old code
@@ -94,8 +95,9 @@ bool IRAM_ATTR TimerHandler(void * timerNo)
 
 #define USING_PWM_FREQUENCY     false
 
-//TODO: WHAT IS THIS
-int channelNum;
+//PWM Channel IDS
+int pwmChannelLeft;
+int pwmChannelRight;
 
 float throttleToDuty(float throttle)
 {
@@ -128,7 +130,7 @@ void setPWMThrottle(int pin, int channel, float throttle)
 ///////////////////////////////
 #include <PID_v2.h>
 
-volatile float DRAM_ATTR targetVelocities[2] = {0,0};
+volatile float DRAM_ATTR targetVelocities[2] = {0.9,0.9};
 //double Kp = 2, Ki = 5, Kd = 1; 
 double pidGainP = 1, pidGainI = 0.1, pidGainD = 0; 
 PID_v2 leftPID(pidGainP, pidGainI, pidGainD, PID::Direct);
@@ -149,6 +151,10 @@ volatile int DRAM_ATTR pidDisplacementTicks[2] = {0,0}; // Global variable for s
 void encoder_isr() {
     // Process each side
     for (int side = 0; side >= 1; side++) {
+        Serial.print("Encoder ISR Side: ");
+        Serial.print(side);
+        Serial.println();
+
         // Reading the current state of encoder A
         int encPin1Val = digitalRead(PIN_RENC_L1);
         int encPin2Val = digitalRead(PIN_RENC_L2);
@@ -252,17 +258,23 @@ void setup() {
     else
         Serial.println(F("Can't set ITimer. Select another freq. or timer"));
     // TODO: Handle ESC B
-    channelNum = ISR_PWM.setPWM_Period(PIN_ESC_A_PWM, PWM_FREQ, 7.5f); // Begins at 1500us 
+    pwmChannelLeft = ISR_PWM.setPWM_Period(PIN_ESC_A_PWM, PWM_FREQ, 7.5f); // Begins at 1500us
+    pwmChannelRight = ISR_PWM.setPWM_Period(PIN_ESC_B_PWM, PWM_FREQ, 7.5f); // Begins at 1500us 
+
     Serial.println("Arming ESCS");
-    delay(10000); // Allow ESC time to arm
+    delay(5000); // Allow ESC time to arm
 
     /////////////////////
     // Encoder Section //
     /////////////////////
 
-    // Set Encoder A PinModes
+    // Set Encoder PinModes
     pinMode(PIN_RENC_L1, INPUT_PULLUP);
     pinMode(PIN_RENC_L2, INPUT_PULLUP);
+    pinMode(PIN_RENC_L3, INPUT_PULLUP);
+    pinMode(PIN_RENC_R1, INPUT_PULLUP);
+    pinMode(PIN_RENC_R2, INPUT_PULLUP);
+    pinMode(PIN_RENC_R3, INPUT_PULLUP);
 
     // Attaching the ISR to encoder A
     attachInterrupt(digitalPinToInterrupt(PIN_RENC_L1), encoder_isr, CHANGE);
@@ -276,11 +288,11 @@ void setup() {
                 targetVelocities[1]); 
 
     // Setup the can bus
-    // setupCAN();
+    setupCAN();
 
     }
 
-    void loop() {
+void loop() {
 
     // TODO: Convert global sleep to ISR Delay
     delayMicroseconds(TIME_INTERVAL);
@@ -295,23 +307,39 @@ void setup() {
 
     // TODO: Make pid function a callback (remove globals for better flow)
 
-    setPWMThrottle(PIN_ESC_A_PWM,channelNum,PIDTickLeft());
-    setPWMThrottle(PIN_ESC_B_PWM,channelNum,PIDTickRight());
+    setPWMThrottle(PIN_ESC_A_PWM,pwmChannelLeft,PIDTickLeft());
+    setPWMThrottle(PIN_ESC_B_PWM,pwmChannelRight,PIDTickRight());
 
+    printPIDStatus();
+   
+}
 
-    // use this print format so you can disable individual plots on the plotter window
-    //Serial.print("zeroline...Div's_displacement:"+ String(0,10)+",");
-    //Serial.print("cur:"+ String(pidDisplacementTicks,10)+",");
-    //Serial.print("cur':"+ String(velocity,10)+",");
-    //Serial.print("tar':"+ String(10,10)+",");
-    //Serial.print("cur'':"+ String(acceleration,10)+",");
-    //Serial.print("PID:"+ String(pidOutputMagnitude,10)+",");
-    //Serial.print("PWM:"+ String(pidOutputPWM,10)+",");
+void printPIDStatus(){
 
-    // Serial.print("error:"+ String(errorAmount(velocity,targetVelocity),10)+",");
-    // Serial.print("zero:"+ String(0,10)+",");
+ // use this print format so you can disable individual plots on the plotter window
+    Serial.print("zeroline...Div's_displacement:"+ String(0,10)+",");
+    Serial.print("VCL:"+ String(pidDisplacementTicks[0],10)+",");
+    Serial.print("VCL':"+ String(velocity[0],10)+",");
+    Serial.print("VTL':"+ String(targetVelocities[0],10)+",");
+    Serial.print("AL'':"+ String(acceleration[0],10)+",");
+    Serial.print("PIDL:"+ String(pidOutputMagnitude[0],10)+",");
+    Serial.print("PWML:"+ String(pidOutputPWM[0],10)+",");
+
+    Serial.print("errL:"+ String(errorAmount(velocity[0],targetVelocities[0]),10)+",");
+    
+ // use this print format so you can disable individual plots on the plotter window
+    Serial.print("VCR:"+ String(pidDisplacementTicks[1],10)+",");
+    Serial.print("VCR':"+ String(velocity[1],10)+",");
+    Serial.print("VTR':"+ String(targetVelocities[1],10)+",");
+    Serial.print("AR':"+ String(acceleration[1],10)+",");
+    Serial.print("PIDR:"+ String(pidOutputMagnitude[1],10)+",");
+    Serial.print("PWMR:"+ String(pidOutputPWM[1],10)+",");
+
+    Serial.print("errR:"+ String(errorAmount(velocity[1],targetVelocities[1]),10)+",");
+    Serial.print("zero:"+ String(0,10)+",");
 
     Serial.println();
+
 }
 
 union FloatByteUnion
@@ -367,7 +395,7 @@ void onRecieveCAN(int packetSize) {
         packetInnerValue.bytes[3] = CAN.read();
 
 
-        // Update corresponding target velocity
+        // Update corresponding target velocityChan
         switch (packetID)
         {
             case ESDACanMessageID::SetTargetVelLeft:
