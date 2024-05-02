@@ -5,11 +5,17 @@
 #include <RF24.h>
 #include <nRF24L01.h>
 #include <CAN.h>
+#include <ESP32Servo.h>
 
 #define SERVO1 1
 #define SERVO2 2
 #define LED_BUTTON 14
 #define LED_SWITCH 12
+#define MOTOR_PIN 26
+
+Servo motor1;
+
+
 
 #define CE_PIN  22
 #define CSN_PIN 21
@@ -121,7 +127,6 @@ void showData()
     //Serial.write(data_var.yValuePack);
 
     newData = false;
-   
   }
 }
 

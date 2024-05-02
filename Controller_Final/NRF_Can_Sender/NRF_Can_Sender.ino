@@ -73,19 +73,19 @@ void loop() {
   data_var.togSwitchVal = digitalRead(toggle_switch);
 
   
-  yToSend = (float) data_var.yValuePack;
-  xToSend = (float) data_var.xValuePack;
+  // yToSend = (float) data_var.yValuePack;
+  // xToSend = (float) data_var.xValuePack;
 
 
 
-  data_var.yValuePack = mapFunc(yToSend, 0, 255, -2.22, 2.22);
-  data_var.xValuePack = mapFunc(xToSend, 0, 255, 0, 4000);
-  if(data_var.yValuePack > -0.21 && data_var.yValuePack < 0)
-    data_var.yValuePack = 0;
+  // data_var.yValuePack = mapFunc(yToSend, 0, 255, 1000, 2000);
+  // data_var.xValuePack = mapFunc(xToSend, 0, 255, 0, 4000);
+  // if(data_var.yValuePack > -0.21 && data_var.yValuePack < 0)
+  //   data_var.yValuePack = 0;
   
 
   currentMillis = millis();
-  if(velPrev != data_var.yValuePack){
+  // if(velPrev != data_var.yValuePack){
     if (currentMillis - prevMillis >= txIntervalMillis) {
       send(data_var.xValuePack, data_var.yValuePack, data_var.buttonState, data_var.togSwitchVal);
       velPrev =  data_var.yValuePack;
@@ -93,7 +93,7 @@ void loop() {
     }
    //} else {
     // data_var.yValuePack = 0;
-  }
+  // }
 }
 
 void send(float X_VAL_HORIZONTAL, float Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_VAL) {
@@ -129,6 +129,11 @@ void updateMessage() {
     txNum = '0';
   }
   dataToSend[8] = txNum;
+}
+
+int mapFuncInt(int x, int in_min, int in_max, int out_min, int out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 float mapFunc(float x, float in_min, float in_max, float out_min, float out_max)
