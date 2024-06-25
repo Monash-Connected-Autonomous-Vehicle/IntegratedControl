@@ -78,7 +78,7 @@ void loop() {
 
 
 
-  // data_var.yValuePack = mapFunc(yToSend, 0, 255, 1000, 2000);
+  data_var.yValuePack = mapFunc(data_var.yValuePack, 0, 255, 1450, 1570);
   // data_var.xValuePack = mapFunc(xToSend, 0, 255, 0, 4000);
   // if(data_var.yValuePack > -0.21 && data_var.yValuePack < 0)
   //   data_var.yValuePack = 0;
@@ -98,7 +98,7 @@ void loop() {
 
 void send(float X_VAL_HORIZONTAL, float Y_VAL_VERTICAL, int BUTTON_VAL, int SWITCH_VAL) {
   bool rslt_data_bool, rslt_button_bool;
-
+// 
   //  rslt_message = radio.write(&dataToSend, sizeof(dataToSend));
   rslt_data_bool = radio.write(&data_var, sizeof(data_var));
 

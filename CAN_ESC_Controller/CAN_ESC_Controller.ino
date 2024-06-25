@@ -207,8 +207,8 @@ float PIDTickRight() {
 #include <CAN.h>
 
 // Pins for CAN Transciever
-const uint16_t PIN_CAN_TX = 23;
-const uint16_t PIN_CAN_RX = 25;
+const uint16_t PIN_CAN_TX = 2;
+const uint16_t PIN_CAN_RX = 15;
 
 // Link Speed for CANBUS in bps
 const long CAN_BAUDRATE = 500E3;
@@ -226,8 +226,6 @@ void setupCAN() {
     } else {
         Serial.println("CAN bus Initialized Successfully");
     }
-    Serial.println("Adding CAN Recieve Hook");
-    CAN.onReceive(onRecieveCAN);
 }
 
 ////////////////
@@ -288,7 +286,7 @@ void setup() {
                 targetVelocities[1]); 
 
     // Setup the can bus
-    setupCAN();
+    //setupCAN();
 
     }
 
@@ -311,7 +309,8 @@ void loop() {
     setPWMThrottle(PIN_ESC_B_PWM,pwmChannelRight,PIDTickRight());
 
     printPIDStatus();
-   
+
+    CANReceiver();
 }
 
 void printPIDStatus(){
@@ -348,7 +347,8 @@ union FloatByteUnion
     float real;
 };
 
-void onRecieveCAN(int packetSize) {
+void CANReceiver() {
+    int packetSize = CAN.parsePacket();
     // Store packetID
     ESDACanMessageID packetID = (ESDACanMessageID)CAN.packetId();
 

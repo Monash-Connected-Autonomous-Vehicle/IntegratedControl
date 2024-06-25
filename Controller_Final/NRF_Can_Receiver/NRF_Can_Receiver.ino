@@ -15,14 +15,12 @@
 
 Servo motor1;
 
-
-
 #define CE_PIN  22
 #define CSN_PIN 21
 #define CHANNEL  76
 
-#define TX_GPIO_PIN 15
-#define RX_GPIO_PIN 2
+#define TX_GPIO_PIN 2
+#define RX_GPIO_PIN 15
 
 // ENUM DEFINITIONS
 enum ESDACanMessageID {
@@ -87,17 +85,17 @@ void loop()
 //  canSender500();
 
   // Float 1: X-Value (This is going to be changed to the steering angle or equivalent value)
-  canSenderFinal(ESDACanMessageID::SteerAmount, data_var.xValuePack);
+  // canSenderFinal(ESDACanMessageID::SteerAmount, data_var.xValuePack);
 
-  // // // Float 2: Y-Value (This is the target velocity)
-  canSenderFinal(ESDACanMessageID::SetTargetVelLeft, data_var.yValuePack);
-  // canSenderFinal(2, data_var.yValuePack);
+  // // // // Float 2: Y-Value (This is the target velocity)
+  // canSenderFinal(ESDACanMessageID::SetTargetVelLeft, data_var.yValuePack);
+  // // canSenderFinal(2, data_var.yValuePack);
 
-  // // // Float 3: Button value (On/Off value maybe?)
-  canSenderFinal(ESDACanMessageID::ESTOP, data_var.buttonState);
+  // // // // Float 3: Button value (On/Off value maybe?)
+  // canSenderFinal(ESDACanMessageID::ESTOP, data_var.buttonState);
 
-  // // // Float 4: 
-  canSenderFinal(ESDACanMessageID::SetAutonomousMode, data_var.togSwitchVal);
+  // // // // Float 4: 
+  // canSenderFinal(ESDACanMessageID::SetAutonomousMode, data_var.togSwitchVal);
 
   showData();
   //ledLightUp();
